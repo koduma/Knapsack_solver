@@ -231,6 +231,31 @@ zoblish_field[i1][i2]=xor128();
 }
 }
 
+vector<tuple<int,double,int> >v;
+
+for(int i=0;i<ITEM;i++){
+if(wei[i]==0){    
+v.push_back(make_tuple(val[i],0,i));
+}
+else{
+v.push_back(make_tuple(0,(double)val[i]/(double)wei[i],i));    
+}    
+}
+
+sort(v.begin(),v.end());
+reverse(v.begin(), v.end());
+
+int val2[ITEM];
+int wei2[ITEM];
+
+memcpy(val2,val,sizeof(val2));
+memcpy(wei2,wei,sizeof(wei));
+
+for(int i=0;i<ITEM;i++){
+val[i]=val2[get<2>(v[i])];
+wei[i]=wei2[get<2>(v[i])];    
+}        
+
 BEAM_SEARCH2();
 
 double check=0;
