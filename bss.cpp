@@ -1,5 +1,5 @@
 //maxscore=7534
-//g++ -O2 -std=c++11 -fopenmp Knapsack.cpp -o knapsack
+//g++ -O2 -std=c++11 -fopenmp bss.cpp -o bss
 #pragma warning(disable:4710)
 #pragma warning(disable:4711)
 #pragma warning(disable:4820)
@@ -268,8 +268,16 @@ check=get_w(ans.item);
 
 cout<<"weight:"<<check<<endl;    
 
+int select[ITEM]={0};
+
 for(int i=0;i<(int)ans.item.size();i++){
-    cout<<ans.item[i]<<endl;
+    for(int j=0;j<ITEM;j++){
+        if(val2[j]==val[ans.item[i]]&&wei2[j]==wei[ans.item[i]]&&select[j]==0){
+            select[j]=1;
+            cout<<j<<endl;
+            break;
+        }
+    }    
 }
     
 
