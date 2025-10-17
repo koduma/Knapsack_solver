@@ -1,3 +1,4 @@
+
 //maxscore=7534
 //g++ -O2 -std=c++11 -fopenmp bss.cpp -o bss
 #pragma warning(disable:4710)
@@ -39,8 +40,8 @@ using namespace std;
 typedef unsigned long long ll;
 
 #define ITEM 50
-#define BW 50000
-#define BW2 10
+#define BW 10000
+#define BW2 5
 
 int val[ITEM] = {360, 83, 59, 130, 431, 67, 230, 52, 93, 125, 670, 892, 600, 38, 48, 147,78, 256, 63, 17, 120, 164, 432, 35, 92, 110, 22, 42, 50, 323, 514, 28,87, 73, 78, 15, 26, 78, 210, 36, 85, 189, 274, 43, 33, 10, 19, 389, 276,312};
       
@@ -48,12 +49,11 @@ int wei[ITEM] = {7, 0, 30, 22, 80, 94, 11, 81, 70, 64, 59, 18, 0, 36, 3, 8, 15, 
        
 int cap = 850;
 
-ll zoblish_field[ITEM+1][ITEM+1];
-
 struct node {
 vector<int>item;
 double score;
-ll hash;
+double sumw;
+double score2;
 int t;
 }fff[2*BW],ggg[2*BW],ans;
 
@@ -64,39 +64,25 @@ ll xor128() {//xorshift整数乱数
 	return (rw = (rw ^ (rw >> 19)) ^ (rt ^ (rt >> 8)));
 }
 
-double eval(vector<int>item){
-double sumv=0;
-double sumw=0;
-for(int i=0;i<(int)item.size();i++){  
-sumv+=(double)val[item[i]];
-sumw+=(double)wei[item[i]];
-}     
+double eval(double sumv,double sumw,int k){
+
+if(0<=k&&k<ITEM){
+sumv+=(double)val[k];
+sumw+=(double)wei[k];
+}    
 
 if((double)cap<sumw){return -1.0;}
 return sumv;
 
 }
 
-double get_w(vector<int>item){
-double sumv=0;
-double sumw=0;
-for(int i=0;i<(int)item.size();i++){  
-sumv+=(double)val[item[i]];
-sumw+=(double)wei[item[i]];
-}     
-
-if((double)cap<sumw){return -1.0;}
+double get_w(double sumw,int k){
+if(0<=k&&k<ITEM){    
+sumw+=(double)wei[k];
+}
+if((double)cap<sumw){return (double)cap+1.0;}
 return sumw;
 
-}
-
-ll calc_hash(vector<int>item){
-ll hash=0ll;
-for (int i = 0; i < (int)item.size(); i++) {
-int num = item[i];
-hash ^= zoblish_field[i][num];
-}
-return hash;
 }
 
 double maxscore=0;
@@ -104,8 +90,6 @@ double maxscore=0;
 double BEAM_SEARCH(node n0) {     
 vector<node>dque;
 dque.push_back(n0);
-    
-unordered_map<ll, bool> visited;
 
 int now2=(n0.t)+1;
 
@@ -119,8 +103,8 @@ node temp = dque[k];
 for (int j = 0; j < 2; j++) {
 node cand = temp;
 if (j==0) {
-cand.score=eval(cand.item);
-//cand.hash=calc_hash(cand.item);
+cand.score=eval(cand.score,cand.sumw,-1);
+cand.sumw=get_w(cand.sumw,-1);    
 if(cand.score>score){
     score=cand.score;
 }
@@ -132,8 +116,8 @@ fff[(2 * k) + j] = cand;
 }
 else{
 cand.item.push_back(i);
-//cand.hash=calc_hash(cand.item);    
-cand.score=eval(cand.item);   
+cand.score=eval(cand.score,cand.sumw,i);
+cand.sumw=get_w(cand.sumw,i);  
 if(cand.score>score){
     score=cand.score;
 }
@@ -156,11 +140,8 @@ for (int j = 0; push_node < BW ;j++) {
 if(j>=(int)vv.size()){break;}
 int p=vv[j].second;
 node n1=fff[p];
-//if(!visited[n1.hash]){
-//visited[n1.hash]=true;
 dque.push_back(n1);
 push_node++;
-//}
 }
 }
 
@@ -171,15 +152,13 @@ void BEAM_SEARCH2() {
 vector<node>dque;
 node n0;
 n0.score=0;
-n0.hash=0ll;
+n0.sumw=0;
 n0.t=0;    
 dque.push_back(n0);
 
 double score=0;
-    
-unordered_map<ll, bool> visited;
 
-for (int i = 0; i < ITEM; i++) {
+for (int i = 0; i < ITEM-1; i++) {
 int ks = (int)dque.size();
 for (int k = 0; k < ks; k++) {
 node temp = dque[k];
@@ -187,25 +166,27 @@ for (int j = 0; j < 2; j++) {
 node cand = temp;
 cand.t=i;    
 if (j==0) {
-cand.score=BEAM_SEARCH(cand);
-//cand.hash=calc_hash(cand.item);    
-cout<<"scoreA:"<<cand.score<<endl;     
+cand.score=eval(cand.score,cand.sumw,-1);
+cand.sumw=get_w(cand.sumw,-1);    
+cand.score2=BEAM_SEARCH(cand);    
+cout<<"scoreA:"<<cand.score2<<endl;     
 ggg[(2 * k) + j] = cand;
 }
 else{
-cand.item.push_back(i);
-//cand.hash=calc_hash(cand.item);    
-cand.score=BEAM_SEARCH(cand); 
-cout<<"scoreB:"<<cand.score<<endl;   
+cand.item.push_back(i);    
+cand.score=eval(cand.score,cand.sumw,i);    
+cand.sumw=get_w(cand.sumw,i);
+cand.score2=BEAM_SEARCH(cand); 
+cout<<"scoreB:"<<cand.score2<<endl;   
 ggg[(2 * k) + j] = cand;
 }
 }
 }
-printf("depth=%d/%d\n",i+1,ITEM);    
+printf("depth=%d/%d\n",i+1,ITEM-1);    
 dque.clear();
 vector<pair<double,int> >vv;    
 for (int j = 0; j < 2 * ks; j++) {
-vv.push_back(make_pair(-ggg[j].score,j));   
+vv.push_back(make_pair(-ggg[j].score2,j));   
 }
 sort(vv.begin(),vv.end());
 int push_node=0;
@@ -213,23 +194,13 @@ for (int j = 0; push_node < BW2 ;j++) {
 if(j>=(int)vv.size()){break;}
 int p=vv[j].second;
 node n1=ggg[p];
-//if(!visited[n1.hash]){
-//visited[n1.hash]=true;
 dque.push_back(n1);
 push_node++;
-///}
 }
 }
 }
 
 int main(){
-
-int i1, i2;
-for(i1=0;i1<ITEM;++i1){
-for(i2=0;i2<ITEM;++i2){
-zoblish_field[i1][i2]=xor128();
-}
-}
 
 vector<tuple<int,double,int> >v;
 
@@ -258,15 +229,8 @@ wei[i]=wei2[get<2>(v[i])];
 
 BEAM_SEARCH2();
 
-double check=0;
-
-check=eval(ans.item);
-
-cout<<"value:"<<check<<endl;
-
-check=get_w(ans.item);
-
-cout<<"weight:"<<check<<endl;    
+double valuex=0;
+double weightx=0;  
 
 int select[ITEM]={0};
 
@@ -275,10 +239,17 @@ for(int i=0;i<(int)ans.item.size();i++){
         if(val2[j]==val[ans.item[i]]&&wei2[j]==wei[ans.item[i]]&&select[j]==0){
             select[j]=1;
             cout<<j<<endl;
+            valuex+=(double)val2[j];
+            weightx+=(double)wei2[j];
             break;
         }
     }    
 }
+
+   
+cout<<"value:"<<valuex<<endl;
+
+cout<<"weight:"<<weightx<<endl;   
     
 
 return 0;
