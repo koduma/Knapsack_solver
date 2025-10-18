@@ -50,7 +50,7 @@ int wei[ITEM] = {7, 0, 30, 22, 80, 94, 11, 81, 70, 64, 59, 18, 0, 36, 3, 8, 15, 
 int cap = 850;
 
 struct node {
-vector<int>item;
+ll item[((ITEM-1)/64)+1];
 double score;
 double sumw;
 double score2;
@@ -97,34 +97,20 @@ double score=0;
 
 for (int i = now2; i < ITEM; i++) {
 int ks = (int)dque.size();
-//#pragma omp parallel for
+#pragma omp parallel for
 for (int k = 0; k < ks; k++) {
 node temp = dque[k];
 for (int j = 0; j < 2; j++) {
 node cand = temp;
 if (j==0) {
 cand.score=eval(cand.score,cand.sumw,-1);
-cand.sumw=get_w(cand.sumw,-1);    
-if(cand.score>score){
-    score=cand.score;
-}
-if(cand.score>maxscore){
-    maxscore=cand.score;
-    ans=cand;
-}    
+cand.sumw=get_w(cand.sumw,-1);       
 fff[(2 * k) + j] = cand;
 }
 else{
-cand.item.push_back(i);
+cand.item[i/64] |= (((ll)(1))<<((i)%64));
 cand.score=eval(cand.score,cand.sumw,i);
-cand.sumw=get_w(cand.sumw,i);  
-if(cand.score>score){
-    score=cand.score;
-}
-if(cand.score>maxscore){
-    maxscore=cand.score;
-    ans=cand;
-}     
+cand.sumw=get_w(cand.sumw,i);    
 fff[(2 * k) + j] = cand;
 }
 }
@@ -132,7 +118,14 @@ fff[(2 * k) + j] = cand;
 dque.clear();
 vector<pair<double,int> >vv;
 for (int j = 0; j < 2 * ks; j++) {
-vv.push_back(make_pair(-fff[j].score,j));    
+vv.push_back(make_pair(-fff[j].score,j));
+if(fff[j].score>score){
+    score=fff[j].score;
+}
+if(fff[j].score>maxscore){
+    maxscore=fff[j].score;
+    ans=fff[j];
+}     
 }
 sort(vv.begin(),vv.end());
 int push_node=0;
@@ -153,7 +146,10 @@ vector<node>dque;
 node n0;
 n0.score=0;
 n0.sumw=0;
-n0.t=0;    
+n0.t=0;
+for(int i=0;i<((ITEM-1)/64)+1;i++){
+n0.item[i]=0ll;    
+}    
 dque.push_back(n0);
 
 double score=0;
@@ -173,7 +169,7 @@ cout<<"scoreA:"<<cand.score2<<endl;
 ggg[(2 * k) + j] = cand;
 }
 else{
-cand.item.push_back(i);    
+cand.item[i/64] |= (((ll)(1))<<((i)%64)); 
 cand.score=eval(cand.score,cand.sumw,i);    
 cand.sumw=get_w(cand.sumw,i);
 cand.score2=BEAM_SEARCH(cand); 
@@ -198,6 +194,16 @@ dque.push_back(n1);
 push_node++;
 }
 }
+}
+
+vector<int> get_item(ll item[((ITEM-1)/64)+1]) {
+    vector<int> result;
+    for (int i = 0; i < ITEM; i++) {
+        if((item[i/64]>>(i%64))&1==1ll){
+            result.push_back(i);
+        }
+    }
+    return result;
 }
 
 int main(){
@@ -234,9 +240,13 @@ double weightx=0;
 
 int select[ITEM]={0};
 
-for(int i=0;i<(int)ans.item.size();i++){
+vector<int>items;
+
+items=get_item(ans.item);
+
+for(int i=0;i<(int)items.size();i++){
     for(int j=0;j<ITEM;j++){
-        if(val2[j]==val[ans.item[i]]&&wei2[j]==wei[ans.item[i]]&&select[j]==0){
+        if(val2[j]==val[items[i]]&&wei2[j]==wei[items[i]]&&select[j]==0){
             select[j]=1;
             cout<<j<<endl;
             valuex+=(double)val2[j];
