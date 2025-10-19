@@ -199,7 +199,7 @@ push_node++;
 vector<int> get_item(ll item[((ITEM-1)/64)+1]) {
     vector<int> result;
     for (int i = 0; i < ITEM; i++) {
-        if((item[i/64]>>(i%64))&1==1ll){
+        if (((item[i/64] >> (i % 64)) & 1) == 1) {
             result.push_back(i);
         }
     }
